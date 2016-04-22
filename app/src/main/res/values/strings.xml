@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">CustomKeyboard</string>
+    <string name="title_activity_main">MainActivity</string>
+    <string name="simple_ime">Simple IME</string>
+    <string name="subtype_en_US">English (US)</string>
+    <string name="title_activity_send">SendActivity</string>
+</resources>
