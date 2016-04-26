@@ -1,7 +1,7 @@
 <resources>
-    <string name="app_name">CustomKeyboard</string>
-    <string name="title_activity_main">MainActivity</string>
-    <string name="simple_ime">Simple IME</string>
-    <string name="subtype_en_US">English (US)</string>
+    <string name="app_name">Trumpoji</string>
+    <string name="title_activity_main">Trumpoji</string>
+    <string name="simple_ime">Keyboard</string>
+    <string name="subtype_en_US">Trumpoji</string>
     <string name="title_activity_send">SendActivity</string>
 </resources>

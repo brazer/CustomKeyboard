@@ -2,6 +2,8 @@ package com.example.softocom.customkeyboard;
 
 import android.app.Activity;
 import android.app.ActivityManager;
+import android.app.usage.UsageStats;
+import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
@@ -16,7 +18,12 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.inputmethod.InputConnection;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Created by Softocom on 21.04.2016.
@@ -63,8 +70,62 @@ public class SimpleIME extends InputMethodService
                     }
                     ic.commitText(String.valueOf(code), 1);
                 } else {
-                    //todo get code
-                    sendStickerToActivity(android.R.drawable.ic_dialog_alert);
+                    switch (primaryCode) {
+                        case 500:
+                            sendStickerToActivity(R.drawable.s1);
+                            break;
+                        case 501:
+                            sendStickerToActivity(R.drawable.s2);
+                            break;
+                        case 502:
+                            sendStickerToActivity(R.drawable.s3);
+                            break;
+                        case 503:
+                            sendStickerToActivity(R.drawable.s4);
+                            break;
+                        case 504:
+                            sendStickerToActivity(R.drawable.s5);
+                            break;
+                        case 505:
+                            sendStickerToActivity(R.drawable.s6);
+                            break;
+                        case 506:
+                            sendStickerToActivity(R.drawable.s7);
+                            break;
+                        case 507:
+                            sendStickerToActivity(R.drawable.s8);
+                            break;
+                        case 508:
+                            sendStickerToActivity(R.drawable.s9);
+                            break;
+                        case 509:
+                            sendStickerToActivity(R.drawable.s10);
+                            break;
+                        case 510:
+                            sendStickerToActivity(R.drawable.s11);
+                            break;
+                        case 511:
+                            sendStickerToActivity(R.drawable.s12);
+                            break;
+                        case 512:
+                            sendStickerToActivity(R.drawable.s13);
+                            break;
+                        case 513:
+                            sendStickerToActivity(R.drawable.s14);
+                            break;
+                        case 514:
+                            sendStickerToActivity(R.drawable.s15);
+                            break;
+                        case 515:
+                            sendStickerToActivity(R.drawable.s16);
+                            break;
+                        case 516:
+                            sendStickerToActivity(R.drawable.s17);
+                            break;
+                        case 517:
+                            sendStickerToActivity(R.drawable.s18);
+                            break;
+                    }
                 }
 
         }
@@ -74,7 +135,9 @@ public class SimpleIME extends InputMethodService
         Intent mainIntent = new Intent(Intent.ACTION_SEND);
         mainIntent.setType(MediaStore.Images.Media.CONTENT_TYPE);
         List pkgAppsList = getPackageManager().queryIntentActivities(mainIntent, 0);
+        //String currentActivity = getActivity();
         String currentActivity = getCurrentActivity();
+        //String currentActivity = getActivityDep(pkgAppsList.size());
         String packageName = null, className = null;
         for (Object resolveInfo : pkgAppsList) {
              if (((ResolveInfo) resolveInfo).activityInfo.name.equals(currentActivity)) {
@@ -100,10 +163,25 @@ public class SimpleIME extends InputMethodService
     private String getCurrentActivity() {
         ActivityManager am = (ActivityManager) getSystemService(Activity.ACTIVITY_SERVICE);
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            /*List<ActivityManager.RunningAppProcessInfo> list = am.getRunningAppProcesses();
-            String processName = list.get(0).processName;*/
-
-            List<ActivityManager.AppTask> tasks = am.getAppTasks();
+            String currentApp = "";
+            @SuppressWarnings("WrongConstant")
+            UsageStatsManager usm = (UsageStatsManager) getSystemService("usagestats");
+            long time = System.currentTimeMillis();
+            List<UsageStats> appList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,
+                    time - 1000 * 1000, time);
+            if (appList != null && appList.size() > 0) {
+                SortedMap<Long, UsageStats> mySortedMap = new TreeMap<Long, UsageStats>();
+                for (UsageStats usageStats : appList) {
+                    mySortedMap.put(usageStats.getLastTimeUsed(),
+                            usageStats);
+                }
+                if (mySortedMap != null && !mySortedMap.isEmpty()) {
+                    currentApp = mySortedMap.get(
+                            mySortedMap.lastKey()).getPackageName();
+                }
+            }
+            return currentApp;
+            /*List<ActivityManager.AppTask> tasks = am.getAppTasks();
             ActivityManager.RecentTaskInfo taskInfo = tasks.get(0).getTaskInfo();
             //// FIXME: 22.04.2016 
             if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -112,12 +190,52 @@ public class SimpleIME extends InputMethodService
             } else {
                 String processName = taskInfo.origActivity.getClassName();
                 return processName;
-            }
+            }*/
 
         } else {
             ActivityManager.RunningTaskInfo info = am.getRunningTasks(1).get(0);
             return info.topActivity.getClassName();
         }
+    }
+
+    private String getActivityDep(int count) {
+        ActivityManager am = (ActivityManager) getSystemService(Activity.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningTaskInfo> list = am.getRunningTasks(count);
+
+        return list.get(1).topActivity.getClassName();
+    }
+
+    private String getActivity() {
+        Class activityThreadClass = null;
+        try {
+            activityThreadClass = Class.forName("android.app.ActivityThread");
+            Object activityThread = activityThreadClass.getMethod("currentActivityThread").invoke(null);
+            Field activitiesField = activityThreadClass.getDeclaredField("mActivities");
+            activitiesField.setAccessible(true);
+            HashMap activities = (HashMap) activitiesField.get(activityThread);
+            for (Object activityRecord : activities.values()) {
+                Class activityRecordClass = activityRecord.getClass();
+                Field pausedField = activityRecordClass.getDeclaredField("paused");
+                pausedField.setAccessible(true);
+                if (!pausedField.getBoolean(activityRecord)) {
+                    Field activityField = activityRecordClass.getDeclaredField("activity");
+                    activityField.setAccessible(true);
+                    Activity activity = (Activity) activityField.get(activityRecord);
+                    return activity.getLocalClassName();
+                }
+            }
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } catch (NoSuchFieldException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     private void playClick(int keyCode){
