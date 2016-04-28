@@ -2,19 +2,21 @@ package com.example.softocom.customkeyboard;
 
 import android.app.Activity;
 import android.app.ActivityManager;
-import android.app.usage.UsageStats;
-import android.app.usage.UsageStatsManager;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.MediaStore;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.List;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 /**
  * Created by Softocom on 25.04.2016.
@@ -48,32 +50,75 @@ public class Utils {
         context.startActivity(pictureMessageIntent);
     }
 
+    public static void sendImageToActivity(int resId, Context context) {
+        Bitmap bitmapToShare = BitmapFactory.decodeResource(
+                context.getResources(), resId);
+
+        File file = getTmpFile(context, bitmapToShare);
+
+        Intent shareIntent = new Intent(android.content.Intent.ACTION_SEND/*, Uri.fromFile(file)*/);
+
+        shareIntent.setType("image/*");
+        shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
+        shareIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+
+        context.startActivity(shareIntent);
+    }
+
+    private static File getTmpFile(Context ctx, Bitmap bmp) {
+        File outputDir = null;
+        if (ctx != null) {
+            outputDir = ctx.getExternalCacheDir();
+            if (outputDir == null || !outputDir.canWrite())
+                outputDir = ctx.getCacheDir();
+        }
+        File tmpFile = null;
+        try {
+            tmpFile = File.createTempFile("tmpImg", ".png", outputDir);
+            FileOutputStream fos = new FileOutputStream(tmpFile);
+            bmp.compress(Bitmap.CompressFormat.PNG, 100, fos);
+            fos.close();
+        } catch (IOException ignored) {
+            ignored.printStackTrace();
+        }
+        return tmpFile;
+    }
+
     private static String getCurrentActivity(Context context) {
         ActivityManager am = (ActivityManager) context.getSystemService(Activity.ACTIVITY_SERVICE);
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            //// FIXME: 25.04.2016 empty string return
-            String currentApp = "";
-            @SuppressWarnings("WrongConstant")
-            UsageStatsManager usm = (UsageStatsManager) context.getSystemService("usagestats");
-            long time = System.currentTimeMillis();
-            List<UsageStats> appList = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY,
-                    time - 1000 * 1000, time);
-            if (appList != null && appList.size() > 0) {
-                SortedMap<Long, UsageStats> mySortedMap = new TreeMap<Long, UsageStats>();
-                for (UsageStats usageStats : appList) {
-                    mySortedMap.put(usageStats.getLastTimeUsed(),
-                            usageStats);
-                }
-                if (mySortedMap != null && !mySortedMap.isEmpty()) {
-                    currentApp = mySortedMap.get(
-                            mySortedMap.lastKey()).getPackageName();
-                }
-            }
-            return currentApp;
+            return getCurrentActivityFromAboveLollipop(context);
         } else {
             ActivityManager.RunningTaskInfo info = am.getRunningTasks(1).get(0);
             return info.topActivity.getClassName();
         }
+    }
+
+    private static String getCurrentActivityFromAboveLollipop(Context context) {
+        final int PROCESS_STATE_TOP = 2;
+        ActivityManager.RunningAppProcessInfo currentInfo = null;
+        Field field = null;
+        try {
+            field = ActivityManager.RunningAppProcessInfo.class.getDeclaredField("processState");
+        } catch (Exception ignored) {
+        }
+        ActivityManager am = (ActivityManager) context.getSystemService(Context.ACTIVITY_SERVICE);
+        List<ActivityManager.RunningAppProcessInfo> appList = am.getRunningAppProcesses();
+        for (ActivityManager.RunningAppProcessInfo app : appList) {
+            if (app.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
+                    && app.importanceReasonCode == ActivityManager.RunningAppProcessInfo.REASON_UNKNOWN) {
+                Integer state = null;
+                try {
+                    state = field.getInt(app);
+                } catch (Exception e) {
+                }
+                if (state != null && state == PROCESS_STATE_TOP) {
+                    currentInfo = app;
+                    break;
+                }
+            }
+        }
+        return currentInfo.processName;
     }
 
 }

@@ -72,7 +72,8 @@ public class SimpleIME extends InputMethodService
                 } else {
                     switch (primaryCode) {
                         case 500:
-                            sendStickerToActivity(R.drawable.s1);
+                            Utils.sendStickerToActivity(R.drawable.s1, this);
+                            //sendStickerToActivity(R.drawable.s1);
                             break;
                         case 501:
                             sendStickerToActivity(R.drawable.s2);

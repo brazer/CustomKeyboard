@@ -44,7 +44,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         listStickers.add(R.drawable.s17);
         listStickers.add(R.drawable.s18);
 
-        GridLayoutManager lLayout = new GridLayoutManager(MainActivity.this, 6);
+        GridLayoutManager lLayout = new GridLayoutManager(MainActivity.this, 3);
         RecyclerView list = (RecyclerView) findViewById(R.id.list);
         list.setLayoutManager(lLayout);
         LayoutInflater inflater = LayoutInflater.from(this);
@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        Utils.sendStickerToActivity(mAdapter.getItem(position), this);
+        Utils.sendImageToActivity(mAdapter.getItem(position), this);
     }
 
 }

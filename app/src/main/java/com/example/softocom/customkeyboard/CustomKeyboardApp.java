@@ -1,7 +1,6 @@
 package com.example.softocom.customkeyboard;
 
 import android.app.Application;
-import android.content.Intent;
 
 /**
  * Created by Softocom on 21.04.2016.
@@ -11,8 +10,6 @@ public class CustomKeyboardApp extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        Intent intent = new Intent(this, SimpleIME.class);
-        startService(intent);
     }
 
 }
