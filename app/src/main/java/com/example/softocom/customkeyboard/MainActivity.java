@@ -1,5 +1,6 @@
 package com.example.softocom.customkeyboard;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
@@ -7,6 +8,8 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.inputmethod.InputMethodInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 
 import java.util.ArrayList;
@@ -50,6 +53,28 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         LayoutInflater inflater = LayoutInflater.from(this);
         mAdapter = new StickersAdapter(inflater, listStickers, this);
         list.setAdapter(mAdapter);
+
+        if (isKeyboardServiceNotLaunched()) {
+            InputMethodManager imeManager =
+                    (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+            if (imeManager != null) {
+                imeManager.showInputMethodPicker();
+            }
+        }
+    }
+
+    private boolean isKeyboardServiceNotLaunched() {
+        InputMethodManager imm = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+        List<InputMethodInfo> mInputMethodProperties = imm.getEnabledInputMethodList();
+        final int N = mInputMethodProperties.size();
+        for (int i = 0; i < N; i++) {
+            InputMethodInfo imi = mInputMethodProperties.get(i);
+            String name = imi.getServiceInfo().packageName;
+            if (name.equals("com.example.softocom.customkeyboard")) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override

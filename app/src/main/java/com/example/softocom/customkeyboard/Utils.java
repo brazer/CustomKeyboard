@@ -56,7 +56,7 @@ public class Utils {
 
         File file = getTmpFile(context, bitmapToShare);
 
-        Intent shareIntent = new Intent(android.content.Intent.ACTION_SEND/*, Uri.fromFile(file)*/);
+        Intent shareIntent = new Intent(android.content.Intent.ACTION_SEND);
 
         shareIntent.setType("image/*");
         shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(file));
